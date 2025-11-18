@@ -1,1 +1,1 @@
-https://squareszleaf.github.io/NanoKVM-USB.github.io/
+https://squareszleaf.github.io/
