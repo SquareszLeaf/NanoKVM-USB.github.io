@@ -1,9 +1,9 @@
-const CACHE_NAME = "nanokvm-usb-cache-v1";
+const CACHE_NAME = "nanokvm-usb-cache-v2";
 const ASSETS = [
   "./",
   "./index.html",
-  "./assets/index-CgH36Hxa.js",
-  "./assets/index-1lSx9EVN.css",
+  "./assets/index-37Xa3UO4.js",
+  "./assets/index-CkGP4u_S.css",
   "./sipeed.ico"
 ];
 
