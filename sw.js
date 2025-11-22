@@ -52,7 +52,6 @@ self.addEventListener("fetch", event => {
 });
 
 function hashAssetList(assets) {
-  // Simple FNV-1a hash to derive cache version from asset manifest contents
   let hash = 2166136261;
   for (const asset of assets) {
     for (let i = 0; i < asset.length; i += 1) {
