@@ -35,6 +35,10 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("fetch", event => {
+  if (event.request.mode === "navigate") {
+    event.respondWith(handleNavigationRequest(event.request));
+    return;
+  }
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
       if (cachedResponse) {
@@ -50,6 +54,21 @@ self.addEventListener("fetch", event => {
     })
   );
 });
+
+async function handleNavigationRequest(request) {
+  try {
+    const networkResponse = await fetch(request);
+    const cache = await caches.open(CACHE_NAME);
+    cache.put(request, networkResponse.clone());
+    return networkResponse;
+  } catch (error) {
+    const cachedResponse = (await caches.match(request)) ?? (await caches.match("./index.html"));
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    throw error;
+  }
+}
 
 function hashAssetList(assets) {
   let hash = 2166136261;
