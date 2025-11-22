@@ -22,5 +22,19 @@
         });
       }
     </script>
+    <script>
+      // Load the Eruda console on the main page (not in the service worker)
+      (function loadEruda() {
+        if (window.eruda) {
+          eruda.init();
+          return;
+        }
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/eruda";
+        script.defer = true;
+        script.onload = () => eruda.init();
+        document.body.appendChild(script);
+      })();
+    </script>
   </body>
 </html>
