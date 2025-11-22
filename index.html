@@ -24,6 +24,10 @@
     </script>
     <script>
       (function loadEruda() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("eruda") !== "true") {
+          return;
+        }
         if (window.eruda) {
           eruda.init();
           return;
