@@ -1,13 +1,17 @@
-const CACHE_NAME = "nanokvm-usb-cache-v2";
 const ASSETS = [
   "./",
   "./index.html",
   "./assets/index-37Xa3UO4.js",
   "./assets/index-CkGP4u_S.css",
-  "./sipeed.ico"
+  "./sipeed.ico",
+  "./manifest.webmanifest",
+  "./assets/icon-192.png",
+  "./assets/icon-512.png"
 ];
+const CACHE_NAME = `nanokvm-usb-cache-${hashAssetList(ASSETS)}`;
 
 self.addEventListener("install", event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
@@ -26,7 +30,7 @@ self.addEventListener("activate", event => {
             return undefined;
           })
         )
-      )
+      ).then(() => clients.claim())
   );
 });
 
@@ -46,3 +50,15 @@ self.addEventListener("fetch", event => {
     })
   );
 });
+
+function hashAssetList(assets) {
+  // Simple FNV-1a hash to derive cache version from asset manifest contents
+  let hash = 2166136261;
+  for (const asset of assets) {
+    for (let i = 0; i < asset.length; i += 1) {
+      hash ^= asset.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+  }
+  return (hash >>> 0).toString(16);
+}
