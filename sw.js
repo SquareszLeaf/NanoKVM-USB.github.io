@@ -1,8 +1,8 @@
 const ASSETS = [
   "./",
   "./index.html",
-  "./assets/index-37Xa3UO4.js",
-  "./assets/index-CkGP4u_S.css",
+  "./assets/index-B8Db9IO7.js",
+  "./assets/index-COmTSWHa.css",
   "./sipeed.ico",
   "./manifest.webmanifest",
   "./assets/icon-192.png",
