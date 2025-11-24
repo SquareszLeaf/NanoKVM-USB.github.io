@@ -1,82 +1,81 @@
-const ASSETS = [
+const CACHE_NAME = "nanokvm-usb-cache";
+const PRECACHE_URLS = [
   "./",
   "./index.html",
-  "./assets/index-B8Db9IO7.js",
-  "./assets/index-COmTSWHa.css",
   "./sipeed.ico",
   "./manifest.webmanifest",
+  "./assets/index-COmTSWHa.css",
+  "./assets/index-D8GDQI94.js",
   "./assets/icon-192.png",
   "./assets/icon-512.png"
 ];
-const CACHE_NAME = `nanokvm-usb-cache-${hashAssetList(ASSETS)}`;
 
-self.addEventListener("install", event => {
-  self.skipWaiting();
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.addAll(PRECACHE_URLS);
+      self.skipWaiting();
+    })()
   );
 });
 
-self.addEventListener("activate", event => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then(keys =>
-        Promise.all(
-          keys.map(key => {
-            if (key !== CACHE_NAME) {
-              return caches.delete(key);
-            }
-            return undefined;
-          })
-        )
-      ).then(() => clients.claim())
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+      await self.clients.claim();
+    })()
   );
 });
 
-self.addEventListener("fetch", event => {
-  if (event.request.mode === "navigate") {
-    event.respondWith(handleNavigationRequest(event.request));
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+
+  if (request.method !== "GET") {
     return;
   }
-  event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then(response => {
-        const responseClone = response.clone();
-        if (event.request.method === "GET" && response.ok) {
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
-        }
-        return response;
-      });
-    })
-  );
+
+  // For navigations, go network-first and fall back to cached index.html
+  if (request.mode === "navigate") {
+    event.respondWith(networkFirstForPage(request));
+    return;
+  }
+
+  // For other requests (JS, CSS, images), use cache-first
+  event.respondWith(cacheFirst(request));
 });
 
-async function handleNavigationRequest(request) {
+async function networkFirstForPage(request) {
   try {
     const networkResponse = await fetch(request);
     const cache = await caches.open(CACHE_NAME);
     cache.put(request, networkResponse.clone());
     return networkResponse;
   } catch (error) {
-    const cachedResponse = (await caches.match(request)) ?? (await caches.match("./index.html"));
-    if (cachedResponse) {
-      return cachedResponse;
+    const cache = await caches.open(CACHE_NAME);
+    const cached =
+      (await cache.match(request)) ||
+      (await cache.match("./index.html")) ||
+      (await cache.match("./"));
+    if (cached) {
+      return cached;
     }
     throw error;
   }
 }
 
-function hashAssetList(assets) {
-  let hash = 2166136261;
-  for (const asset of assets) {
-    for (let i = 0; i < asset.length; i += 1) {
-      hash ^= asset.charCodeAt(i);
-      hash = Math.imul(hash, 16777619);
-    }
+async function cacheFirst(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
+  if (cached) {
+    return cached;
   }
-  return (hash >>> 0).toString(16);
+
+  const networkResponse = await fetch(request);
+  if (networkResponse && networkResponse.ok) {
+    cache.put(request, networkResponse.clone());
+  }
+  return networkResponse;
 }
